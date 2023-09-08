@@ -1,0 +1,25 @@
+== Shell script to fetch dataset size
+
+#!/bin/bash 
+
+bq query --use_legacy_sql=false "SELECT
+  dataset_id,
+  table_id,
+  # Convert size in bytes to GB
+  ROUND(size_bytes/POW(10,9),2) AS size_gb,
+  # Convert creation_time and last_modified_time from UNIX EPOCH format to a timestamp
+  TIMESTAMP_MILLIS(creation_time) AS creation_time,
+  TIMESTAMP_MILLIS(last_modified_time) AS last_modified_time,
+  row_count,
+  # Convert table type from numerical value to description
+  CASE
+    WHEN type = 1 THEN 'table'
+    WHEN type = 2 THEN 'view'
+  ELSE
+  NULL
+END
+  AS type
+FROM
+  bigquery-public-data.ethereum_blockchain.__TABLES__
+ORDER BY
+  size_gb DESC;"
