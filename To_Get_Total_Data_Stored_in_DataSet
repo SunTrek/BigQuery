@@ -1,0 +1,44 @@
+
+Reference: https://stackoverflow.com/questions/31266740/how-to-get-bigquery-storage-size-for-a-single-table#:~:text=Just%20use%20the%20command%2Dline,Total%20Bytes%20and%20so%20forth.
+
+==Using SQL Query ==
+
+SELECT 
+  table_id,
+  DATETIME(TIMESTAMP_MILLIS(creation_time),"America/New_York") AS creation_time,
+  DATETIME(TIMESTAMP_MILLIS(last_modified_time),"America/New_York") AS last_modified_time,
+  row_count,
+  ROUND(SUM(size_bytes) / (1024*1024*1024), 2) AS size_in_gb,
+  ROUND(SUM(size_bytes) / (1024*1024), 2) AS size_in_mb
+FROM `your_project.your_dataset.__TABLES__`
+GROUP BY
+  table_id,
+  creation_time,
+  last_modified_time,
+  row_count
+
+Example:
+
+SELECT
+  dataset_id,
+  table_id,
+  # Convert size in bytes to GB
+  ROUND(size_bytes/POW(10,9),2) AS size_gb,
+  # Convert creation_time and last_modified_time from UNIX EPOCH format to a timestamp
+  TIMESTAMP_MILLIS(creation_time) AS creation_time,
+  TIMESTAMP_MILLIS(last_modified_time) AS last_modified_time,
+  row_count,
+  # Convert table type from numerical value to description
+  CASE
+    WHEN type = 1 THEN 'table'
+    WHEN type = 2 THEN 'view'
+  ELSE
+  NULL
+END
+  AS type
+FROM
+  `bigquery-public-data.ethereum_blockchain`.__TABLES__
+ORDER BY
+  size_gb DESC;
+
+
